@@ -622,5 +622,5 @@ async def test_messages_from_google_inline_image_bytes() -> None:
     assert len(result[0].content) == 1
     image = result[0].content[0]
     assert image.image == (
-        "data:image/png;base64,iVBORw0KGgoAAQJpbWFnZS1ieXRlc/7+"
+        "data:image/png;base64,iVBORw0KGgoAAQJpbWFnZS1ieXRlc//+"
     )
