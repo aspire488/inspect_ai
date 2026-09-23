@@ -600,3 +600,27 @@ async def test_messages_from_google_multiple_tool_responses_in_user() -> None:
     assert isinstance(result[2], ChatMessageUser)
     assert isinstance(result[3], ChatMessageTool)
     assert result[3].function == "tool2"
+
+
+async def test_messages_from_google_inline_image_bytes() -> None:
+    """Convert raw Google inline image bytes into a valid data URI."""
+    png = b"\x89PNG\r\n\x1a\n\x00\x01\x02image-bytes\xff\xfe"
+    contents = [
+        Content(
+            role="user",
+            parts=[
+                Part(inline_data={"mime_type": "image/png", "data": png}),
+            ],
+        )
+    ]
+
+    result = await messages_from_google(contents)
+
+    assert len(result) == 1
+    assert isinstance(result[0], ChatMessageUser)
+    assert isinstance(result[0].content, list)
+    assert len(result[0].content) == 1
+    image = result[0].content[0]
+    assert image.image == (
+        "data:image/png;base64,iVBORw0KGgoAAQJpbWFnZS1ieXRlc/7+"
+    )
