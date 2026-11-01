@@ -23,7 +23,10 @@ def validate_agent_message(value: Any) -> dict[str, Any]:
         fields = ", ".join(sorted(unexpected_fields))
         raise ValueError(f"agent_message contains unsupported fields: {fields}.")
 
-    for field in ("id", "author", "recipient", "role"):
+    if "id" in value and not isinstance(value["id"], str):
+        raise ValueError("agent_message field 'id' must be a string.")
+
+    for field in ("author", "recipient", "role"):
         if (
             field in value
             and value[field] is not None
