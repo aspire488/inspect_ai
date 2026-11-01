@@ -18,9 +18,14 @@ def test_validate_agent_message_accepts_string_id() -> None:
 
 def test_validate_agent_message_rejects_non_string_id() -> None:
     with pytest.raises(
-        ValueError, match="agent_message field 'id' must be a string or null"
+        ValueError, match="agent_message field 'id' must be a string"
     ):
         validate_agent_message({"type": "agent_message", "id": 123, "content": []})
+
+
+def test_validate_agent_message_rejects_null_id() -> None:
+    with pytest.raises(ValueError, match="agent_message field 'id' must be a string"):
+        validate_agent_message({"type": "agent_message", "id": None, "content": []})
 
 
 def test_validate_agent_message_still_rejects_unknown_fields() -> None:
