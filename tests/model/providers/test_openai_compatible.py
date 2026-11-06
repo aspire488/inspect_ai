@@ -1140,3 +1140,41 @@ def test_openrouter_resolve_stream_declines_reasoning() -> None:
         assert thinking.resolve_stream(GenerateConfig()) is False
         # reasoning explicitly disabled wins over effort/tokens
         assert openrouter_api(reasoning_enabled=False).resolve_stream(effort) is True
+
+
+@pytest.mark.parametrize(
+    ("sdk_version", "base_url", "expected"),
+    [
+        (
+            "2.31.0",
+            "https://api.together.xyz/v1/",
+            "https://api.together.xyz/v1/",
+        ),
+        (
+            "3.0.0",
+            "https://api.together.xyz/v1/",
+            "https://api.together.xyz",
+        ),
+        (
+            "3.0.0",
+            "https://proxy.example.com/custom/v1/",
+            "https://proxy.example.com/custom",
+        ),
+        (
+            "3.0.0",
+            "https://proxy.example.com/custom/",
+            "https://proxy.example.com/custom",
+        ),
+    ],
+)
+def test_together_sdk_base_url(
+    monkeypatch: pytest.MonkeyPatch,
+    sdk_version: str,
+    base_url: str,
+    expected: str,
+) -> None:
+    from inspect_ai.model._providers import _together_batch
+
+    monkeypatch.setattr(_together_batch, "version", lambda _: sdk_version)
+
+    assert _together_batch._together_sdk_base_url(base_url) == expected
