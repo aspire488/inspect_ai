@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import functools
 import sys
+from importlib.metadata import version
 from typing import IO, cast
 
 from anyio import to_thread
@@ -43,8 +44,9 @@ class TogetherBatcher(OpenAIBatcher[ChatCompletion]):
         super().__init__(client, config, retry_config, ChatCompletion)
         # together uses different file upload method than openai
         # async client doesn't have .upload method implemented
+        together_base_url = _together_sdk_base_url(str(client.base_url))
         self._together_sync_client = Together(
-            api_key=client.api_key, base_url=str(client.base_url)
+            api_key=client.api_key, base_url=together_base_url
         )
 
     # OpenAIBatcher overrides
@@ -118,7 +120,7 @@ class TogetherBatcher(OpenAIBatcher[ChatCompletion]):
         # extra_headers in the request.
         client = AsyncTogether(
             api_key=self._openai_client.api_key,
-            base_url=str(self._openai_client.base_url),
+            base_url=_together_sdk_base_url(str(self._openai_client.base_url)),
             default_headers=extra_headers,
         )
 
@@ -138,6 +140,19 @@ class TogetherBatcher(OpenAIBatcher[ChatCompletion]):
             raise RuntimeError(
                 f"Unable to create batch: {response.warning or 'unknown error'}"
             )
+
+
+def _together_sdk_base_url(base_url: str) -> str:
+    """Adapt Inspect's OpenAI-style base URL to the installed Together SDK."""
+    sdk_major = int(version("together").split(".", maxsplit=1)[0])
+    if sdk_major < 3:
+        return base_url
+
+    # Together SDK 3.x prefixes its endpoints with /v1 itself. Keeping the
+    # OpenAI-compatible /v1 suffix here would produce /v1/v1/files and
+    # /v1/v1/batches. Preserve any custom host while removing that suffix.
+    normalized = base_url.rstrip("/")
+    return normalized.removesuffix("/v1")
 
 
 def _iso_to_unix(input: OpenAIBatch, field: str) -> int | None:
