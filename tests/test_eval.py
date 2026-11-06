@@ -956,6 +956,23 @@ async def test_json_retry_preserves_unicode_sample_id(
     assert "first attempt fails" in sample.error_retries[0].message
 
 
+@pytest.mark.parametrize("sample_id", ["²", "①"])
+def test_eval_sample_id_filter_preserves_unicode_digit_ids(sample_id: str) -> None:
+    """Unicode digit-like string IDs must remain exact string selectors."""
+    logs = eval(
+        Task(dataset=[Sample(id=sample_id, input="x")]),
+        model="mockllm/model",
+        sample_id=sample_id,
+        display="none",
+    )
+
+    assert len(logs) == 1
+    assert logs[0].status == "success"
+    assert logs[0].samples is not None
+    assert len(logs[0].samples) == 1
+    assert logs[0].samples[0].id == sample_id
+
+
 @pytest.mark.parametrize("failure_stage", ["seed", "checkpoint", "start", "flush"])
 @pytest.mark.parametrize("log_format", ["eval", "json"])
 @pytest.mark.parametrize("failure_mode", ["error", "cancel", "debug"])
