@@ -27,7 +27,7 @@ from ._dataset import (
 
 
 def normalise_sample_id(id: str | int | None) -> str:
-    if isinstance(id, str) and id.isdigit():
+    if isinstance(id, str) and id.isdecimal():
         id = int(id)
     return id if isinstance(id, str) else str(id).zfill(20)
 
