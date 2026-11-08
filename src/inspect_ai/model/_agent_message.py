@@ -1,6 +1,6 @@
 from typing import Any, cast
 
-_AGENT_MESSAGE_FIELDS = {"type", "author", "recipient", "role", "content"}
+_AGENT_MESSAGE_FIELDS = {"type", "id", "author", "recipient", "role", "content"}
 _AGENT_MESSAGE_PART_FIELDS = {
     "input_text": {"type", "text"},
     "encrypted_content": {"type", "encrypted_content"},
@@ -22,6 +22,9 @@ def validate_agent_message(value: Any) -> dict[str, Any]:
     if unexpected_fields:
         fields = ", ".join(sorted(unexpected_fields))
         raise ValueError(f"agent_message contains unsupported fields: {fields}.")
+
+    if "id" in value and not isinstance(value["id"], str):
+        raise ValueError("agent_message field 'id' must be a string.")
 
     for field in ("author", "recipient", "role"):
         if (
