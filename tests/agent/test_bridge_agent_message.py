@@ -37,6 +37,7 @@ from inspect_ai.agent._bridge.responses_impl import (
 )
 from inspect_ai.agent._bridge.types import AgentBridge
 from inspect_ai.agent._bridge.util import validate_bridge_media
+from inspect_ai.model._agent_message import validate_agent_message
 from inspect_ai.model._chat_message import ChatMessageUser
 from inspect_ai.model._openai_responses import (
     is_agent_message,
@@ -171,7 +172,7 @@ def test_agent_message_with_role_key_is_still_attributed() -> None:
     assert content[0].internal == {"agent_message": item}
 
 
-@pytest.mark.parametrize("update", [{"author": None}, {"role": "user"}])
+@pytest.mark.parametrize("update", [{"author": None}, {"role": "user"}, {"id": "msg_codex_123"}])
 async def test_agent_message_supported_envelope_variants_pass_validation(
     update: dict[str, Any],
 ) -> None:
@@ -185,6 +186,15 @@ async def test_agent_message_supported_envelope_variants_pass_validation(
         AgentBridge(AgentState(messages=[]), allow_remote_media=False), messages
     )
     assert dict((await openai_responses_inputs(messages))[0]) == item
+
+
+@pytest.mark.parametrize("message_id", [None, 123, ["msg_codex_123"]])
+def test_agent_message_id_must_be_a_string(message_id: Any) -> None:
+    item = _agent_message_item(_text("delegate result"))
+    item["id"] = message_id
+
+    with pytest.raises(ValueError, match="agent_message field 'id' must be a string"):
+        validate_agent_message(item)
 
 
 async def test_agent_message_media_is_rejected_by_sandbox_bridge() -> None:
